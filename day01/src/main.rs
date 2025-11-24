@@ -1,79 +1,61 @@
+use std::error::Error;
+
 fn main() {
     let input = include_str!("../input.txt");
-    println!("The answer is: {}", run(input.trim()));
-}
-
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
-
-fn run(input: &str) -> i32 {
-    let mut position: (i32, i32) = (0, 0);
-    let mut current_direction = Direction::North;
-
-    for step in input.split(", ") {
-        let dir = &step[..1];
-        let num: i32 = step[1..].parse().unwrap();
-
-        match current_direction {
-            Direction::North => {
-                if dir == "R" {
-                    position.0 += num;
-                    current_direction = Direction::East;
-                } else {
-                    position.0 -= num;
-                    current_direction = Direction::West;
-                }
-            }
-            Direction::East => {
-                if dir == "R" {
-                    position.1 -= num;
-                    current_direction = Direction::South;
-                } else {
-                    position.1 += num;
-                    current_direction = Direction::North;
-                }
-            }
-            Direction::South => {
-                if dir == "R" {
-                    position.0 -= num;
-                    current_direction = Direction::West;
-                } else {
-                    position.0 += num;
-                    current_direction = Direction::East;
-                }
-            }
-            Direction::West => {
-                if dir == "R" {
-                    position.1 += num;
-                    current_direction = Direction::North;
-                } else {
-                    position.1 -= num;
-                    current_direction = Direction::South;
-                }
-            }
-        }
+    match run_part1(input) {
+        Ok(output) => println!("The answer is: {}", output),
+        Err(e) => eprintln!("Error: {}", e),
     }
-    return position.0.abs() + position.1.abs();
+}
+
+type Coords = (i32, i32);
+
+const DIRECTION_DELTAS: [Coords; 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
+
+fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
+    let mut position: Coords = (0, 0);
+    let mut direction_idx = 0;
+
+    for step in input.trim().split(", ") {
+        let mut chars = step.chars();
+        let turn = chars.next().ok_or("Empty turn")?;
+        let num: i32 = chars
+            .collect::<String>()
+            .parse()
+            .map_err(|_| "failed to parse number")?;
+
+        direction_idx = if turn == 'R' {
+            (direction_idx + 1) % 4
+        } else {
+            (direction_idx + 3) % 4
+        };
+
+        let current_direction = DIRECTION_DELTAS[direction_idx];
+
+        position.0 += current_direction.0 * num;
+        position.1 += current_direction.1 * num;
+    }
+
+    return Ok(position.0.abs() + position.1.abs());
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    macro_rules! test_run {
+    macro_rules! test_run_part1 {
         ($name:ident, $s:expr, $o:expr) => {
             #[test]
             fn $name() {
-                assert_eq!($o, run($s))
+                match run_part1($s) {
+                    Ok(o) => assert_eq!($o, o),
+                    Err(e) => panic!("{}", e),
+                }
             }
         };
     }
 
-    test_run!(two, "R2, L3", 5);
-    test_run!(three, "R2, R2, R2", 2);
-    test_run!(four, "R5, L5, R5, R3", 12);
+    test_run_part1!(two, "R2, L3", 5);
+    test_run_part1!(three, "R2, R2, R2", 2);
+    test_run_part1!(four, "R5, L5, R5, R3", 12);
 }
