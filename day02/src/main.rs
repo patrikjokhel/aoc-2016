@@ -36,21 +36,17 @@ fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
                 'D' => position.1 = max(position.1 - 1, -1),
                 'L' => position.0 = max(position.0 - 1, -1),
                 'R' => position.0 = min(position.0 + 1, 1),
-                _ => panic!("invalid character received: {}", c),
+                _ => return Err("invalid character received".into()),
             }
         }
 
         match numbers.get(&position) {
             Some(n) => num_str += n.to_string().as_str(),
-            None => panic!("position is not in numbers: {:?}", position),
+            None => return Err(format!("position is not in numbers: {:?}", position).into()),
         }
     }
 
-    let result: i32 = match num_str.parse() {
-        Ok(n) => n,
-        Err(_) => panic!("result is not a valid i32: {}", num_str),
-    };
-
+    let result: i32 = num_str.parse()?;
     return Ok(result);
 }
 
