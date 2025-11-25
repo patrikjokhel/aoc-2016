@@ -64,21 +64,16 @@ fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
 
         let current_direction = DIRECTION_DELTAS[direction_idx];
 
-        if current_direction.0 != 0 {
-            for _ in 0..num {
+        for _ in 0..num {
+            if current_direction.0 != 0 {
                 position.0 += current_direction.0;
-                let newly_inserted = positions_visited.insert(position);
-                if !newly_inserted {
-                    break 'outer;
-                }
-            }
-        } else {
-            for _ in 0..num {
+            } else {
                 position.1 += current_direction.1;
-                let newly_inserted = positions_visited.insert(position);
-                if !newly_inserted {
-                    break 'outer;
-                }
+            }
+
+            let newly_inserted = positions_visited.insert(position);
+            if !newly_inserted {
+                break 'outer;
             }
         }
     }
