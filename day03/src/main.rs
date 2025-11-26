@@ -15,18 +15,14 @@ fn main() {
 fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
     let mut valid_triangle_count: i32 = 0;
 
-    for (i, line) in input.trim().lines().enumerate() {
-        let mut nums: Vec<i32> = line
-            .split("  ")
-            .filter_map(|n| match n.trim().parse::<i32>() {
-                Ok(val) => Some(val),
-                _ => None,
-            })
-            .collect();
+    for line in input.trim().lines() {
+        let mut nums: [i32; 3] = line
+            .split_whitespace()
+            .map(|n| n.trim().parse::<i32>())
+            .collect::<Result<Vec<i32>, _>>()?
+            .try_into()
+            .map_err(|_| "expected exactly 3 numbers per row")?;
 
-        if nums.len() != 3 {
-            return Err(format!("triangle without 3 sides {:?} on line {}", nums, i).into());
-        }
         nums.sort();
 
         if (nums[0] + nums[1]) > nums[2] {
