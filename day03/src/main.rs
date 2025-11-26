@@ -34,39 +34,38 @@ fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
 
 fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
     let mut valid_triangle_count: i32 = 0;
+    let mut triangles: Vec<[i32; 3]> = Vec::new();
 
-    let mut a: Vec<i32> = Vec::new();
-    let mut b: Vec<i32> = Vec::new();
-    let mut c: Vec<i32> = Vec::new();
+    let rows: Vec<[i32; 3]> = input
+        .trim()
+        .lines()
+        .map(|line| -> Result<[i32; 3], Box<dyn Error>> {
+            let nums = line
+                .split_whitespace()
+                .map(|n| n.parse::<i32>())
+                .collect::<Result<Vec<i32>, _>>()?;
 
-    let nums = input.trim().lines().map(|line| {
-        line.split("  ")
-            .filter_map(|n| match n.trim().parse::<i32>() {
-                Ok(val) => Some(val),
-                _ => None,
-            })
-    });
+            let arr: [i32; 3] = nums.try_into().map_err(|_| "expected 3 numbers per line")?;
 
-    for line in nums {
-        let cols: Vec<i32> = line.collect();
-        if cols.len() != 3 {
-            return Err("row without 3 cols encountered".into());
-        }
-        a.push(cols[0]);
-        b.push(cols[1]);
-        c.push(cols[2]);
+            return Ok(arr);
+        })
+        .collect::<Result<Vec<[i32; 3]>, _>>()?;
+
+    for group in rows.chunks(3) {
+        let [a1, b1, c1] = group[0];
+        let [a2, b2, c2] = group[1];
+        let [a3, b3, c3] = group[2];
+
+        triangles.push([a1, a2, a3]);
+        triangles.push([b1, b2, b3]);
+        triangles.push([c1, c2, c3]);
     }
 
-    a.append(&mut b);
-    a.append(&mut c);
+    for tri in triangles {
+        let mut sides = tri;
+        sides.sort();
 
-    for chunk in a.chunks_mut(3) {
-        if chunk.len() != 3 {
-            return Err("triangle without 3 sides encountered".into());
-        }
-        chunk.sort();
-
-        if (chunk[0] + chunk[1]) > chunk[2] {
+        if (sides[0] + sides[1]) > sides[2] {
             valid_triangle_count += 1;
         }
     }
