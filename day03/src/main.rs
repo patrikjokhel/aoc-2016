@@ -6,6 +6,10 @@ fn main() {
         Ok(res) => println!("Part1 solution is: {}", res),
         Err(e) => eprintln!("Part1 Error {}", e),
     }
+    match run_part2(&input) {
+        Ok(res) => println!("Part2 solution is: {}", res),
+        Err(e) => eprintln!("Part2 Error {}", e),
+    }
 }
 
 fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
@@ -29,6 +33,48 @@ fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
             valid_triangle_count += 1;
         }
     }
+    return Ok(valid_triangle_count);
+}
+
+fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
+    let mut valid_triangle_count: i32 = 0;
+
+    let mut a: Vec<i32> = Vec::new();
+    let mut b: Vec<i32> = Vec::new();
+    let mut c: Vec<i32> = Vec::new();
+
+    let nums = input.trim().lines().map(|line| {
+        line.split("  ")
+            .filter_map(|n| match n.trim().parse::<i32>() {
+                Ok(val) => Some(val),
+                _ => None,
+            })
+    });
+
+    for line in nums {
+        let cols: Vec<i32> = line.collect();
+        if cols.len() != 3 {
+            return Err("row without 3 cols encountered".into());
+        }
+        a.push(cols[0]);
+        b.push(cols[1]);
+        c.push(cols[2]);
+    }
+
+    a.append(&mut b);
+    a.append(&mut c);
+
+    for chunk in a.chunks_mut(3) {
+        if chunk.len() != 3 {
+            return Err("triangle without 3 sides encountered".into());
+        }
+        chunk.sort();
+
+        if (chunk[0] + chunk[1]) > chunk[2] {
+            valid_triangle_count += 1;
+        }
+    }
+
     return Ok(valid_triangle_count);
 }
 
@@ -56,6 +102,14 @@ mod tests {
   10  15  20
   5  7  11
   5  5  15",
+        2
+    );
+    run_test!(
+        example_3,
+        run_part2,
+        "  5  10  25
+  10  15  20
+  25  20  10",
         2
     );
 }
