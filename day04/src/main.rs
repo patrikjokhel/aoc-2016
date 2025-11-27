@@ -6,6 +6,10 @@ fn main() {
         Ok(val) => println!("Part1 solution is {}", val),
         Err(e) => eprintln!("Part1 Error {}", e),
     }
+    match run_part2(&input) {
+        Ok(val) => println!("Part2 solution is {}", val),
+        Err(e) => eprintln!("Part2 Error {}", e),
+    }
 }
 
 struct Room {
@@ -74,6 +78,24 @@ impl Room {
 
         return checksum.eq(&self.checksum);
     }
+
+    fn decrypt_name(&self) -> String {
+        let name = self
+            .letters
+            .iter()
+            .map(|el| {
+                el.chars()
+                    .map(|ch| {
+                        char::from_u32((97 + (((ch as u8 as i32 - 97) + self.sector) % 26)) as u32)
+                            .unwrap()
+                    })
+                    .collect::<String>()
+            })
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        return name;
+    }
 }
 
 fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
@@ -95,6 +117,29 @@ fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
     });
 
     return Ok(total);
+}
+
+fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
+    let rooms: Vec<Room> = input
+        .lines()
+        .map(|line| {
+            return Room::from_string(line.trim());
+        })
+        .collect::<Result<Vec<Room>, _>>()?
+        .try_into()
+        .map_err(|_| "boo")?;
+
+    for room in rooms {
+        if !room.is_valid() {
+            continue;
+        }
+
+        if room.decrypt_name().contains("north") {
+            return Ok(room.sector);
+        }
+    }
+
+    return Err("couldnt find room that would match".into());
 }
 
 #[cfg(test)]
@@ -122,4 +167,10 @@ not-a-real-room-404[oarel]
 totally-real-room-200[decoy]",
         1514
     );
+
+    #[test]
+    fn test_decrypt_name() {
+        let room = Room::from_string("qzmt-zixmtkozy-ivhz-343[decoy]").unwrap();
+        assert_eq!(room.decrypt_name(), "very encrypted name");
+    }
 }
