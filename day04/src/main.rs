@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::HashMap, error::Error, fs, ops::Add};
+use std::{collections::HashMap, error::Error, fs};
 
 fn main() {
     let input = fs::read_to_string("./day04/input.txt").expect("missing input.txt");
@@ -40,43 +40,18 @@ impl Room {
 
     fn is_valid(&self) -> bool {
         let mut character_map: HashMap<char, i32> = HashMap::new();
-        for letter in &self.letters {
-            for ch in letter.chars() {
-                match character_map.get_mut(&ch) {
-                    Some(val) => {
-                        let new_val = val.add(1);
-                        character_map.insert(ch, new_val);
-                    }
-                    None => {
-                        character_map.insert(ch, 1);
-                    }
-                }
-            }
-        }
 
-        let mut checksum: Vec<(&char, &i32)> = character_map.iter().collect();
-
-        checksum.sort_by(|a, b| {
-            if a.1 > b.1 {
-                return Ordering::Less;
-            } else if a.1 < b.1 {
-                return Ordering::Greater;
-            }
-
-            return a.0.cmp(b.0);
+        self.letters.iter().for_each(|letter| {
+            letter
+                .chars()
+                .for_each(|ch| *character_map.entry(ch).or_insert(0) += 1);
         });
 
-        let checksum: String = checksum
-            .iter()
-            .fold(String::from(""), |mut acc, el| {
-                acc += &el.0.to_string();
-                return acc;
-            })
-            .chars()
-            .take(5)
-            .collect();
+        let mut counts: Vec<(char, i32)> = character_map.into_iter().collect();
+        counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
 
-        return checksum.eq(&self.checksum);
+        let checksum: String = counts.iter().take(5).map(|(ch, _)| ch).collect();
+        return checksum == self.checksum;
     }
 
     fn decrypt_name(&self) -> String {
@@ -85,10 +60,7 @@ impl Room {
             .iter()
             .map(|el| {
                 el.chars()
-                    .map(|ch| {
-                        char::from_u32((97 + (((ch as u8 as i32 - 97) + self.sector) % 26)) as u32)
-                            .unwrap()
-                    })
+                    .map(|ch| shift_char(&ch, self.sector))
                     .collect::<String>()
             })
             .collect::<Vec<String>>()
@@ -98,25 +70,23 @@ impl Room {
     }
 }
 
+fn shift_char(ch: &char, shift: i32) -> char {
+    return ((((*ch as u8 - b'a') as i32 + shift) % 26) as u8 + b'a') as char;
+}
+
 fn run_part1(input: &str) -> Result<i32, Box<dyn Error>> {
     let rooms: Vec<Room> = input
         .lines()
         .map(|line| {
             return Room::from_string(line.trim());
         })
-        .collect::<Result<Vec<Room>, _>>()?
-        .try_into()
-        .map_err(|_| "boo")?;
+        .collect::<Result<Vec<Room>, _>>()?;
 
-    let total: i32 = rooms.iter().fold(0, |mut acc, room| {
-        if room.is_valid() {
-            acc += room.sector;
-        }
-
-        return acc;
-    });
-
-    return Ok(total);
+    return Ok(rooms
+        .iter()
+        .filter(|r| r.is_valid())
+        .map(|r| r.sector)
+        .sum());
 }
 
 fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
@@ -125,9 +95,7 @@ fn run_part2(input: &str) -> Result<i32, Box<dyn Error>> {
         .map(|line| {
             return Room::from_string(line.trim());
         })
-        .collect::<Result<Vec<Room>, _>>()?
-        .try_into()
-        .map_err(|_| "boo")?;
+        .collect::<Result<Vec<Room>, _>>()?;
 
     for room in rooms {
         if !room.is_valid() {
